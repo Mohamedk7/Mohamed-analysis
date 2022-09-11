@@ -1,0 +1,169 @@
+---
+title: "Capstone_ How Does a Bike-Share Navigate Speedy Success?"
+author: "Mohamed KONE"
+date: "2022-09-04"
+output:
+  github_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+## The main goal of our analysis is to use historical trend in order to discover the difference of usage of our Bike service by the different type of subscribtor.
+
+## The insight we'll discover here will allow to know how each kind of user is using the service and what should we include on our service in order to convince them that subscribing in our annual plan would be profitable for them.
+
+# Our data are located on the the entreprise website and are organized per months
+
+```{r Load csv & merge}
+### Loading necessary library
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(lubridate)
+library(hms)
+library(zoo)
+library(data.table)
+
+setwd("~/divvy-tripdata")
+
+myfolder <- "divvy-tripdata"
+
+allfiles <- list.files(path = myfolder, pattern="*-*-*.csv",full.names = TRUE)
+allfiles
+
+Bike_tripdata <- allfiles %>%
+  lapply(read.csv)%>%
+  bind_rows
+
+glimpse(Bike_tripdata)
+
+```
+
+```{r Comparing member per station activities}
+# Show an overview of member_casual and activities for each stations
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+Bike_tripdata_clean <- read_csv("~/divvy-tripdata/Bike_tripdata_clean2.csv")
+glimpse(Bike_tripdata_clean)
+
+Station_name<-Bike_tripdata_clean %>%
+  group_by(start_station_name,member_casual) %>%
+  summarize(name_stations=nchar(start_station_name),average_length=mean(ride_length))
+
+ glimpse(Station_name)
+ 
+ #Ploting my data
+ ggplot(Station_name, aes(start_station_name,average_length))+
+   geom_point(aes(fill=(member_casual)))+
+   theme(axis.text = element_text(angle= 90))
+ 
+ ##We can noticed generally in function of the average ride time that the casual are riding more member!
+
+ ## Identifying the riders that are using more services in function of member type
+ 
+ Best_riders<-Bike_tripdata_clean %>%
+  group_by(ride_id,member_casual) %>%
+  summarize(average_length=mean(ride_length)) %>%
+   arrange(desc(average_length))
+ 
+ 
+
+ head(Best_riders)
+ 
+ # Depending to the the average length time per ride, the 6 first best riders are casual
+ 
+```
+
+```{r comparing member type activities for  the latest 12 month}
+
+# Show an overview of activities for last 12 months
+
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(lubridate)
+
+Bike_trip_perL12M<-Bike_tripdata_clean %>%
+  group_by(month_year,member_casual) %>%
+  summarize(number_usage=nchar(month_year))
+
+ glimpse(Bike_trip_perL12M)
+ 
+ #Plotting my data
+ ggplot(Bike_trip_perL12M, aes(month_year))+
+   geom_bar(aes(fill=(member_casual)))+
+   theme(axis.text = element_text(angle=45))
+   
+ 
+## in function of month of latest 12 months, we can notice that casual are using the service like member. We can also notice that the grobal usage is going down from jully 2021 to March 2022, but this affect more casual user.It will be important to check this with marketing team!
+```
+
+```{r Comparing member type activities for weekdays}
+# Show an overview of activities for weekdays
+
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+Bike_trip_perweekdays<-Bike_tripdata_clean %>%
+  group_by(weekdays,member_casual) %>%
+  summarize(total_usage=nchar(weekdays))
+
+ glimpse(Bike_trip_perweekdays)
+ 
+ #Ploting my data
+ ggplot(Bike_trip_perweekdays, aes(weekdays))+
+   geom_bar(aes(fill=(member_casual)))+
+   theme(axis.text = element_text(angle=45))
+ 
+ ## with the plot comparing activities per day, we can noticed that casual are mainly using more bike service the weekend days (sunday & saturday) compared to member.
+```
+
+```{r Comparing member type in function of the rideable type they are using usualy}
+# Show an overview of riders activities according with the rideable type they're using usualy
+
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+Bike_trip_per_rideable_type<-Bike_tripdata_clean %>%
+  group_by(rideable_type,member_casual) %>%
+  summarize(average_length=mean(ride_length))
+
+ glimpse(Bike_trip_per_rideable_type)
+ 
+ #Ploting my data
+ ggplot(Bike_trip_per_rideable_type, aes(rideable_type))+
+   geom_bar(aes(fill=(member_casual)))+
+   theme(axis.text = element_text(angle=45))
+ 
+ #the difference we can notice here is that member are using only 2/3 type of bike compared to casual
+ 
+```
+
+# Note
+
+## Overall we notice during our analysis:
+
+### the different member type are not using the service on the same way, casual are more active the weekend day and member are generally active everyday;
+
+### In function of month we notice also that there are some period where casual are less active so it can explain why some of them are not using annual subscription.
+
+### Comparing the rideable type for each user, we notice the casual are the only to use docked bike, we'll check with marketing team to check if this offer is less expensive or if it's exclude on annual payment plan.
+
+### Comparing the mean length time, it appear that the user that have spent more time by using service are Casual, so it mean this user group could be also interested by a long time subscription
+
+# Recommendations
+
+### Taking in count the notes, as some casual are using just service for a casual month , in place of annual subscription, it could be also better to have bi annual subscription pack for this king of users;
+
+### For casual that we identifying as best rider, we can suggest them the annual pack in order to show them the interest of this offer for them;
+
+### it will be also better to have a survey in order to check with casual users that are most active to check why they are not choosing annual offer, it would allow to get more insight for future actions.
